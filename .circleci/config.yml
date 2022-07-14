@@ -1,26 +1,85 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 # See: https://circleci.com/docs/2.0/configuration-reference
+# See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+# See: https://circleci.com/docs/2.0/configuration-reference/#steps
+# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
+default_context: &context
+  context:
+    - dockerhub
+
+default_requires: &setup
+  <<: *context
+  requires:
+    - setup
+
+executors:
+  arm:
+    machine:
+      image: ubuntu-2004:current
+    resource_class: arm.medium
+
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
-    docker:
-      - image: cimg/base:stable
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+  setup:
+    executor: arm
     steps:
       - checkout
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+          name: Install ansible
+          command: pip3 install ansible jmespath
+      - run:
+          name: Setup
+          command: make setup
+          environment:
+            DOCKER_PUSH: "true"
+            DOCKER_LATEST: "true"
+      - persist_to_workspace:
+          root: .
+          paths:
+            - data
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+  build_and_push:
+    executor: arm
+    parameters:
+      target:
+        description: Target repository to build
+        type: string
+
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Docker login
+          command: docker login --username=$DOCKERHUB_USER --password=$DOCKERHUB_TOKEN
+      - run:
+          name: Build and push
+          command: make -C data build_<< parameters.target >>
+
+
+
 workflows:
-  say-hello-workflow:
+  default:
     jobs:
-      - say-hello
+      - setup:
+          *context
+
+      - build_and_push:
+          <<: *setup
+          name: build-<< matrix.target >>
+          matrix:
+            parameters:
+              target: ["tianon_exim4", "snuba", "sentry", "sentry-cli"]
+
+      - build_and_push:
+          <<: *context
+          name: build-<< matrix.target >>
+          requires:
+            - build-sentry-cli
+          matrix:
+            parameters:
+              target: ["relay", "symbolicator"]
+
+
+

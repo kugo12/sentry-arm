@@ -10,10 +10,10 @@
 {% set tag_latest = ("-t " + tag + ":latest") if latest else "" %}
 
 build_{{ item.key }}:
-	docker buildx build {{ push }} --platform arm64 {{ tag_latest }} -t {{ tag }}:{{ version }} {{ context }}
+	docker buildx build --progress=plain {{ push }} --platform arm64 {{ tag_latest }} -t {{ tag }}:{{ version }} {{ context }}
 {% endfor %}
 
 build_sentry:
-	cd sentry && docker buildx build --platform linux/arm64 -t sentry_builder -f docker/builder.dockerfile .
+	cd sentry && docker buildx build --progress=plain --platform linux/arm64 -t sentry_builder -f docker/builder.dockerfile .
 	docker run --rm --platform linux/arm64 -v $(shell pwd)/sentry:/workspace sentry_builder
-	cd sentry && docker buildx build {{ push }} --platform linux/arm64 {{ (user_tag + "sentry:latest") if latest else "" }} -t {{ user_tag }}sentry:{{ build.sentry.checkout }} -f docker/Dockerfile .
+	cd sentry && docker buildx build --progress=plain {{ push }} --platform linux/arm64 {{ (user_tag + "sentry:latest") if latest else "" }} -t {{ user_tag }}sentry:{{ build.sentry.checkout }} -f docker/Dockerfile .
