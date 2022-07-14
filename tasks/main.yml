@@ -1,0 +1,28 @@
+---
+- name: Remove working directory
+  file:
+    path: "{{ pwd }}"
+    state: absent
+
+- name: Ensure working directory exists
+  file:
+    path: "{{ pwd }}"
+    state: directory
+
+- name: Clone and patch single repo
+  when: repo is defined
+  vars:
+    item:
+      key: "{{ repo }}"
+      value: "{{ build[repo] }}"
+  include_tasks: clone_and_patch.yml
+
+- name: Clone and patch repos
+  when: repo is undefined
+  with_items: "{{ build | dict2items }}"
+  include_tasks: clone_and_patch.yml
+
+- name: Generate Makefile
+  template:
+    src: "{{ playbook_dir }}/templates/Makefile.j2"
+    dest: "{{ pwd }}/Makefile"

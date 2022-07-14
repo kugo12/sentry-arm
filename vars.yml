@@ -1,0 +1,31 @@
+---
+
+build:
+  tianon_exim4:
+    repo: https://github.com/tianon/dockerfiles.git
+    checkout: master
+    tag: latest
+    cd: exim4
+  relay:
+    repo: https://github.com/getsentry/relay.git
+    checkout: 22.6.0
+    patch: 22.6.0
+  sentry:
+    repo: https://github.com/getsentry/sentry.git
+    checkout: 22.6.0
+    patch: 22.6.0
+    non_generic_build: true
+  sentry-cli:
+    repo: https://github.com/getsentry/sentry-cli.git
+    checkout: 2.3.1
+    patch: 2.3.1
+  snuba:
+    repo: https://github.com/getsentry/snuba.git
+    checkout: 22.6.0
+  symbolicator:
+    repo: https://github.com/getsentry/symbolicator.git
+    checkout: 0.5.1
+    patch: 0.5.1
+
+pwd: "{{ playbook_dir }}/data"
+patch_dir: "{{ playbook_dir }}/patch"

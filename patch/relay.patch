@@ -1,0 +1,32 @@
+diff --git a/Dockerfile b/Dockerfile
+index 3193812c..f753ce54 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,14 +1,14 @@
+-ARG DOCKER_ARCH=amd64
++ARG DOCKER_ARCH=arm64
+
+ ##################
+ ### Deps stage ###
+ ##################
+
+-FROM getsentry/sentry-cli:1 AS sentry-cli
+-FROM $DOCKER_ARCH/centos:7 AS relay-deps
++FROM sentry-cli:2.3.1 AS sentry-cli
++FROM centos:7 AS relay-deps
+
+ ARG DOCKER_ARCH
+-ARG BUILD_ARCH=x86_64
++ARG BUILD_ARCH=aarch64
+
+ ENV DOCKER_ARCH=${DOCKER_ARCH}
+ ENV BUILD_ARCH=${BUILD_ARCH}
+@@ -41,7 +41,7 @@ WORKDIR /work
+
+ FROM relay-deps AS relay-builder
+
+-ARG RELAY_FEATURES=ssl,processing,crash-handler
++ARG RELAY_FEATURES=ssl,processing
+ ENV RELAY_FEATURES=${RELAY_FEATURES}
+
+ COPY . .

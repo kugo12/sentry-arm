@@ -1,0 +1,97 @@
+diff --git a/docker/Dockerfile b/docker/Dockerfile
+index d3f31f2..6b96bb3 100644
+--- a/docker/Dockerfile
++++ b/docker/Dockerfile
+@@ -12,9 +12,9 @@ LABEL org.opencontainers.image.authors="oss@sentry.io"
+ RUN groupadd -r sentry && useradd -r -m -g sentry sentry
+ 
+ ENV GOSU_VERSION=1.12 \
+-  GOSU_SHA256=0f25a21cf64e58078057adc78f38705163c1d564a959ff30a891c31917011a54 \
++  GOSU_SHA256=ff6f0b36315d2013d4fcc442cded0e0403d6bb29abc4cd6f94f2bde90bf97a38 \
+   TINI_VERSION=0.19.0 \
+-  TINI_SHA256=93dcc18adc78c65a028a84799ecf8ad40c936fdfc5f2a57b1acda5a8117fa82c
++  TINI_SHA256=07952557df20bfd2a95f9bef198b445e006171969499a1d361bd9e6f8e5e0e81
+ 
+ 
+ RUN set -x \
+@@ -24,11 +24,11 @@ RUN set -x \
+   && apt-get update && apt-get install -y --no-install-recommends $buildDeps \
+   && rm -rf /var/lib/apt/lists/* \
+   # grab gosu for easy step-down from root
+-  && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-amd64" \
++  && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-arm64" \
+   && echo "$GOSU_SHA256 /usr/local/bin/gosu" | sha256sum --check --status \
+   && chmod +x /usr/local/bin/gosu \
+   # grab tini for signal processing and zombie killing
+-  && wget -O /usr/local/bin/tini "https://github.com/krallin/tini/releases/download/v$TINI_VERSION/tini-amd64" \
++  && wget -O /usr/local/bin/tini "https://github.com/krallin/tini/releases/download/v$TINI_VERSION/tini-arm64" \
+   && echo "$TINI_SHA256 /usr/local/bin/tini" | sha256sum --check --status \
+   && chmod +x /usr/local/bin/tini \
+   && apt-get purge -y --auto-remove $buildDeps
+@@ -60,6 +60,24 @@ RUN set -x \
+   && buildDeps="$buildDeps \
+   libmaxminddb-dev \
+   "\
++  # psycopg2
++  && buildDeps="$buildDeps \
++  libpq-dev \
++  " \
++  # grpcio
++  && buildDeps="$buildDeps \
++  build-essential \
++  python-dev \
++  " \
++  # confluent-kafka
++  && buildDeps="$buildDeps \
++  librdkafka-dev \
++  librdkafka1 \
++  " \
++  # misc
++  && buildDeps="$buildDeps \
++  curl \
++  " \
+   # xmlsec
+   && buildDeps="$buildDeps \
+   libxmlsec1-dev \
+diff --git a/docker/builder.dockerfile b/docker/builder.dockerfile
+index acfadb5..1568e11 100644
+--- a/docker/builder.dockerfile
++++ b/docker/builder.dockerfile
+@@ -1,4 +1,21 @@
+-FROM python:3.8.12-slim-buster as sdist
++FROM rust:slim-buster as volta
++RUN apt-get update && apt-get install -y --no-install-recommends \
++	 gcc \
++	 git \
++	 curl \
++	 openssl \
++	 libssl-dev \
++	 ca-certificates \
++	 tar \
++	 perl \
++	 libmodule-load-conditional-perl \
++	 pkg-config
++
++RUN git clone https://github.com/volta-cli/volta; \
++	cd volta; \
++	cargo build --release;
++
++FROM python:3.8.12-slim-bullseye as sdist
+ 
+ LABEL maintainer="oss@sentry.io"
+ LABEL org.opencontainers.image.title="Sentry Wheel Builder"
+@@ -23,10 +40,10 @@ ENV VOLTA_VERSION=0.8.1 \
+   VOLTA_HOME=/.volta \
+   PATH=/.volta/bin:$PATH
+ 
+-RUN wget "https://github.com/volta-cli/volta/releases/download/v$VOLTA_VERSION/volta-$VOLTA_VERSION-linux-openssl-1.1.tar.gz" \
+-  && tar -xzf "volta-$VOLTA_VERSION-linux-openssl-1.1.tar.gz" -C /usr/local/bin \
+-  # Running `volta -v` triggers setting up the shims in VOLTA_HOME (otherwise node won't work)
+-  && volta -v
++COPY --from=volta /volta/target/release/volta /usr/local/bin
++COPY --from=volta /volta/target/release/volta-shim /usr/local/bin
++COPY --from=volta /volta/target/release/volta-migrate /usr/local/bin
++RUN volta -v
+ 
+ WORKDIR /js
+ 

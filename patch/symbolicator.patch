@@ -1,0 +1,42 @@
+diff --git a/Dockerfile b/Dockerfile
+index aed3cd4..95ba843 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,16 +1,14 @@
+-FROM getsentry/sentry-cli:1 AS sentry-cli
+-FROM debian:stretch-slim AS symbolicator-build
++FROM sentry-cli:2.3.1 AS sentry-cli
++FROM debian:buster-slim AS symbolicator-build
+ 
+ WORKDIR /work
+ 
+ # Hooray for running with a totally outdated debian image
+-RUN echo 'deb http://deb.debian.org/debian stretch-backports main' > /etc/apt/sources.list.d/cmake-backports.list
+-RUN echo 'deb http://deb.debian.org/debian stretch-backports-sloppy main' >> /etc/apt/sources.list.d/cmake-backports.list
+ 
+ RUN apt-get update \
+     && apt-get install -y --no-install-recommends build-essential ca-certificates curl libssl-dev pkg-config git zip \
+     # below required for sentry-native
+-    clang-11 cmake/stretch-backports libarchive13/stretch-backports-sloppy libuv1/stretch-backports libcurl4-openssl-dev \
++    clang-11 cmake libarchive13 libuv1 libcurl4-openssl-dev \
+     && rm -rf /var/lib/apt/lists/*
+ 
+ # Because the image has gcc-6 as default compiler, and 3.8 as default clang. We are at 11 and 14 respectively. Let that sink in.
+@@ -70,7 +68,7 @@ RUN sentry-cli --version \
+ # Copy the compiled binary to a clean image #
+ #############################################
+ 
+-FROM debian:stretch-slim
++FROM debian:buster-slim
+ RUN apt-get update \
+     && apt-get install -y --no-install-recommends openssl ca-certificates gosu curl cabextract \
+     && rm -rf /var/lib/apt/lists/*
+@@ -84,7 +82,7 @@ RUN groupadd --system symbolicator --gid $SYMBOLICATOR_GID \
+     && useradd --system --gid symbolicator --uid $SYMBOLICATOR_UID symbolicator
+ 
+ VOLUME ["/data"]
+-RUN mkdir /etc/symbolicator && \
++RUN mkdir /etc/symbolicator /data && \
+     chown symbolicator:symbolicator /etc/symbolicator /data
+ 
+ EXPOSE 3021

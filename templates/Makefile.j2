@@ -1,0 +1,19 @@
+{% set items = build | dict2items %}
+{% set docker_user = lookup("env", "DOCKERHUB_USER") %}
+{% set push = "--push" if lookup("env", "DOCKER_PUSH", default="false") | bool else "" %}
+{% set user_tag = (docker_user + "/") if docker_user else "" %}
+{% set latest = lookup("env", "DOCKER_LATEST", default="false") | bool %}
+
+{% for item in (items | json_query("[?type(value.non_generic_build) == 'null']")) %}
+{% set context = item.key + "/" + (item.value.cd | default(".")) %}
+{% set tag, version = user_tag + item.key, item.value.tag | default(item.value.checkout) %}
+{% set tag_latest = ("-t " + tag + ":latest") if latest else "" %}
+
+build_{{ item.key }}:
+	docker buildx build {{ push }} --platform arm64 {{ tag_latest }} -t {{ tag }}:{{ version }} {{ context }}
+{% endfor %}
+
+build_sentry:
+	cd sentry && docker buildx build --platform linux/arm64 -t sentry_builder -f docker/builder.dockerfile .
+	docker run --rm --platform linux/arm64 -v $(shell pwd)/sentry:/workspace sentry_builder
+	cd sentry && docker buildx build {{ push }} --platform linux/arm64 {{ (user_tag + "sentry:latest") if latest else "" }} -t {{ user_tag }}sentry:{{ build.sentry.checkout }} -f docker/Dockerfile .
