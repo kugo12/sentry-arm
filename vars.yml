@@ -28,4 +28,11 @@ build:
     patch: 0.5.1
 
 pwd: "{{ playbook_dir }}/data"
-patch_dir: "{{ playbook_dir }}/patch"
+patch_template_dir: "{{ playbook_dir }}/patch"
+patch_dir: "{{ pwd }}/patch"
+
+
+docker_user: '{{ lookup("env", "DOCKERHUB_USER") }}'
+docker_push: '{{ "--push" if lookup("env", "DOCKER_PUSH", default="false") | bool else "" }}'
+user_tag: '{{ (docker_user + "/") if docker_user else "" }}'
+docker_latest: '{{ lookup("env", "DOCKER_LATEST", default="false") | bool }}'

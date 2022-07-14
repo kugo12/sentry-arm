@@ -4,10 +4,14 @@
     path: "{{ pwd }}"
     state: absent
 
-- name: Ensure working directory exists
+- name: Ensure directories exists
   file:
-    path: "{{ pwd }}"
+    path: "{{ item }}"
     state: directory
+  with_items:
+    - "{{ pwd }}"
+    - "{{ patch_dir }}"
+
 
 - name: Clone and patch single repo
   when: repo is defined

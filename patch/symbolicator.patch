@@ -5,7 +5,7 @@ index aed3cd4..95ba843 100644
 @@ -1,16 +1,14 @@
 -FROM getsentry/sentry-cli:1 AS sentry-cli
 -FROM debian:stretch-slim AS symbolicator-build
-+FROM sentry-cli:2.3.1 AS sentry-cli
++FROM {{ user_tag }}sentry-cli:{{ build["sentry-cli"].checkout }} AS sentry-cli
 +FROM debian:buster-slim AS symbolicator-build
  
  WORKDIR /work

@@ -9,10 +9,7 @@
 
 - name: Patch {{ item.key }}
   when: item.value.patch is defined
-  shell:
-    chdir: "{{ pwd }}/{{ item.key }}"
-    cmd: git apply {{ patch_dir }}/{{ item.key }}.patch
-  register: git_patch
-
-- debug:
-    var: git_patch
+  vars:
+    src: "{{ patch_template_dir }}/{{ item.key }}.patch"
+    dest: "{{ patch_dir }}/{{ item.key }}.patch"
+  include_tasks: patch.yml

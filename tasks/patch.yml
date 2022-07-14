@@ -1,0 +1,14 @@
+---
+- name: Template
+  template:
+    src: "{{ src }}"
+    dest: "{{ dest }}"
+
+- name: Patch
+  shell:
+    chdir: "{{ pwd }}/{{ item.key }}"
+    cmd: git apply {{ dest }}
+  register: git_patch
+
+- debug:
+    var: git_patch
