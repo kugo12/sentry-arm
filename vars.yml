@@ -8,24 +8,24 @@ build:
     cd: exim4
   relay:
     repo: https://github.com/getsentry/relay.git
-    checkout: 22.6.0
-    patch: 22.6.0
+    checkout: 22.7.0
+    patch: true
   sentry:
     repo: https://github.com/getsentry/sentry.git
-    checkout: 22.6.0
-    patch: 22.6.0
+    checkout: 22.7.0
+    patch: true
     non_generic_build: true
   sentry-cli:
     repo: https://github.com/getsentry/sentry-cli.git
-    checkout: 2.3.1
-    patch: 2.3.1
+    checkout: 2.4.1
+    patch: true
   snuba:
     repo: https://github.com/getsentry/snuba.git
-    checkout: 22.6.0
+    checkout: 22.7.0
   symbolicator:
     repo: https://github.com/getsentry/symbolicator.git
     checkout: 0.5.1
-    patch: 0.5.1
+    patch: true
 
 pwd: "{{ playbook_dir }}/data"
 patch_template_dir: "{{ playbook_dir }}/patch"
