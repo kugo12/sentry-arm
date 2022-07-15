@@ -15,11 +15,20 @@ default_requires: &setup
   requires:
     - setup
 
+default_machine: &machine
+  machine:
+    image: ubuntu-2004:current
+
 executors:
+  x86-small:
+    <<: *machine
+    resource_class: small
   arm:
-    machine:
-      image: ubuntu-2004:current
+    <<: *machine
     resource_class: arm.medium
+  arm-large:
+    <<: *machine
+    resource_class: arm.large
 
 jobs:
   setup:
@@ -41,11 +50,13 @@ jobs:
             - data
 
   build_and_push:
-    executor: arm
     parameters:
       target:
         description: Target repository to build
         type: string
+      executor:
+        type: executor
+    executor: << parameters.executor >>
 
     steps:
       - attach_workspace:
@@ -61,19 +72,31 @@ jobs:
 
 workflows:
   default:
+    when:
+      equal: [ main, << pipeline.git.branch >> ]
+
     jobs:
       - setup:
           *context
 
       - build_and_push:
           <<: *setup
+          executor: arm
+          matrix:
+            parameters:
+              target: ["tianon_exim4", "snuba"]
+
+      - build_and_push:
+          <<: *setup
+          executor: arm-large
           name: build-<< matrix.target >>
           matrix:
             parameters:
-              target: ["tianon_exim4", "snuba", "sentry", "sentry-cli"]
+              target: ["sentry", "sentry-cli"]
 
       - build_and_push:
           <<: *context
+          executor: arm-large
           name: build-<< matrix.target >>
           requires:
             - build-sentry-cli
