@@ -1,0 +1,59 @@
+diff --git a/.env b/.env
+index 0a7bae2..9180417 100644
+--- a/.env
++++ b/.env
+@@ -5,11 +5,12 @@ SENTRY_EVENT_RETENTION_DAYS=90
+ SENTRY_BIND=9000
+ # Set SENTRY_MAIL_HOST to a valid FQDN (host/domain name) to be able to send emails!
+ # SENTRY_MAIL_HOST=example.com
+-SENTRY_IMAGE=getsentry/sentry:22.7.0
+-SNUBA_IMAGE=getsentry/snuba:22.7.0
+-RELAY_IMAGE=getsentry/relay:22.7.0
+-SYMBOLICATOR_IMAGE=getsentry/symbolicator:0.5.1
++SENTRY_IMAGE=kugo12/sentry:22.7.0
++SNUBA_IMAGE=kugo12/snuba:22.7.0
++RELAY_IMAGE=kugo12/relay:22.7.0
++SYMBOLICATOR_IMAGE=kugo12/symbolicator:0.5.1
+ WAL2JSON_VERSION=latest
+ HEALTHCHECK_INTERVAL=30s
+ HEALTHCHECK_TIMEOUT=60s
+ HEALTHCHECK_RETRIES=5
++DOCKER_PLATFORM=linux/arm64
+diff --git a/docker-compose.yml b/docker-compose.yml
+index c35dc3a..928c1c4 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -98,7 +98,7 @@ x-snuba-defaults: &snuba_defaults
+ services:
+   smtp:
+     <<: *restart_policy
+-    image: tianon/exim4
++    image: kugo12/tianon_exim4
+     hostname: "${SENTRY_MAIL_HOST:-}"
+     volumes:
+       - "sentry-smtp:/var/spool/exim4"
+@@ -150,7 +150,7 @@ services:
+         target: /opt/sentry/
+   zookeeper:
+     <<: *restart_policy
+-    image: "confluentinc/cp-zookeeper:5.5.0"
++    image: "confluentinc/cp-zookeeper:7.2.0"
+     environment:
+       ZOOKEEPER_CLIENT_PORT: "2181"
+       CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+@@ -164,13 +164,13 @@ services:
+     healthcheck:
+       <<: *healthcheck_defaults
+       test:
+-        ["CMD-SHELL", 'echo "ruok" | nc -w 2 -q 2 localhost 2181 | grep imok']
++        ["CMD-SHELL", 'echo "ruok" | nc -w 2 localhost 2181 | grep imok']
+   kafka:
+     <<: *restart_policy
+     depends_on:
+       zookeeper:
+         <<: *depends_on-healthy
+-    image: "confluentinc/cp-kafka:5.5.0"
++    image: "confluentinc/cp-kafka:7.2.0"
+     environment:
+       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
