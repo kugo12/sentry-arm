@@ -1,5 +1,5 @@
 diff --git a/docker/Dockerfile b/docker/Dockerfile
-index d3f31f2..6b96bb3 100644
+index 8923545..eefcd60 100644
 --- a/docker/Dockerfile
 +++ b/docker/Dockerfile
 @@ -12,9 +12,9 @@ LABEL org.opencontainers.image.authors="oss@sentry.io"
@@ -53,6 +53,14 @@ index d3f31f2..6b96bb3 100644
    # xmlsec
    && buildDeps="$buildDeps \
    libxmlsec1-dev \
+@@ -95,6 +113,7 @@ RUN set -x \
+   libyaml-dev \
+   # other
+   pkg-config \
++  libpq5 librdkafka1 \
+   \
+   && apt-get clean \
+   && rm -rf /var/lib/apt/lists/* \
 diff --git a/docker/builder.dockerfile b/docker/builder.dockerfile
 index acfadb5..1568e11 100644
 --- a/docker/builder.dockerfile
